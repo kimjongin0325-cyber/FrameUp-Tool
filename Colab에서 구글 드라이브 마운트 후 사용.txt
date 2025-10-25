@@ -1,0 +1,6 @@
+# Colab에서 구글 드라이브 마운트 후 사용
+from google.colab import drive
+drive.mount('/content/drive')
+
+# 실행
+!python upscale_x2.py
