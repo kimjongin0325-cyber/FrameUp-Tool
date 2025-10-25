@@ -1,0 +1,53 @@
+2024-04-10 14:21:51,475 INFO: 
+------------------------ neosr ------------------------
+Pytorch Version: 2.2.1+cu121
+2024-04-10 14:21:51,571 INFO: Dataset [paired] is built.
+2024-04-10 14:21:51,572 INFO: Training statistics:
+	Starting model: 4xmssim_span_pretrain
+	Number of train images: 2989
+	Dataset enlarge ratio: 1
+	Batch size per gpu: 12
+	Accumulated batches: 12
+	World size (gpu number): 1
+	Required iters per epoch: 250
+	Total epochs: 2000. Total iters: 500000
+2024-04-10 14:21:51,572 INFO: Dataset [single] is built.
+2024-04-10 14:21:51,572 INFO: Number of val images/folders in val_1: 19
+2024-04-10 14:21:51,731 INFO: Using network [span].
+2024-04-10 14:21:51,820 INFO: Loss [mssim] enabled.
+2024-04-10 14:21:51,821 INFO: Using model [default].
+2024-04-10 14:21:52,288 INFO: AMP enabled.
+2024-04-10 14:21:52,288 INFO: Start training from epoch: 0, iter: 0
+2024-04-10 14:27:51,270 INFO: [ epoch:  20 ] [ iter:  5,000 ] [ performance: 13.951 it/s ] [ lr: 5.00e-04 ] [ eta: 9:43:13 ] l_g_mssim: 8.1789e-02 l_g_total: 8.1789e-02 
+2024-04-10 14:27:51,270 INFO: Saving models and training states.
+2024-04-10 14:33:50,535 INFO: [ epoch:  40 ] [ iter: 10,000 ] [ performance: 13.800 it/s ] [ lr: 4.99e-04 ] [ eta: 9:42:03 ] l_g_mssim: 7.6193e-02 l_g_total: 7.6193e-02 
+2024-04-10 14:33:50,536 INFO: Saving models and training states.
+2024-04-10 14:39:46,294 INFO: [ epoch:  60 ] [ iter: 15,000 ] [ performance: 13.898 it/s ] [ lr: 4.98e-04 ] [ eta: 9:35:47 ] l_g_mssim: 6.8140e-02 l_g_total: 6.8140e-02 
+2024-04-10 14:39:46,294 INFO: Saving models and training states.
+2024-04-10 14:45:40,889 INFO: [ epoch:  80 ] [ iter: 20,000 ] [ performance: 14.402 it/s ] [ lr: 4.96e-04 ] [ eta: 9:29:14 ] l_g_mssim: 6.5003e-02 l_g_total: 6.5003e-02 
+2024-04-10 14:45:40,889 INFO: Saving models and training states.
+2024-04-10 14:51:25,675 INFO: [ epoch: 100 ] [ iter: 25,000 ] [ performance: 14.651 it/s ] [ lr: 4.94e-04 ] [ eta: 9:19:49 ] l_g_mssim: 4.7996e-02 l_g_total: 4.7996e-02 
+2024-04-10 14:51:25,675 INFO: Saving models and training states.
+2024-04-10 14:57:14,595 INFO: [ epoch: 120 ] [ iter: 30,000 ] [ performance: 13.585 it/s ] [ lr: 4.92e-04 ] [ eta: 9:12:43 ] l_g_mssim: 5.4386e-02 l_g_total: 5.4386e-02 
+2024-04-10 14:57:14,595 INFO: Saving models and training states.
+2024-04-10 15:03:23,942 INFO: [ epoch: 140 ] [ iter: 35,000 ] [ performance: 13.413 it/s ] [ lr: 4.89e-04 ] [ eta: 9:10:30 ] l_g_mssim: 7.2516e-02 l_g_total: 7.2516e-02 
+2024-04-10 15:03:23,942 INFO: Saving models and training states.
+2024-04-10 15:09:45,461 INFO: [ epoch: 160 ] [ iter: 40,000 ] [ performance: 13.877 it/s ] [ lr: 4.85e-04 ] [ eta: 9:09:37 ] l_g_mssim: 6.8947e-02 l_g_total: 6.8947e-02 
+2024-04-10 15:09:45,461 INFO: Saving models and training states.
+2024-04-10 15:16:05,443 INFO: [ epoch: 180 ] [ iter: 45,000 ] [ performance: 13.276 it/s ] [ lr: 4.81e-04 ] [ eta: 9:07:17 ] l_g_mssim: 7.0041e-02 l_g_total: 7.0041e-02 
+2024-04-10 15:16:05,443 INFO: Saving models and training states.
+2024-04-10 15:22:18,638 INFO: [ epoch: 200 ] [ iter: 50,000 ] [ performance: 13.435 it/s ] [ lr: 4.77e-04 ] [ eta: 9:03:07 ] l_g_mssim: 1.0448e-01 l_g_total: 1.0448e-01 
+2024-04-10 15:22:18,638 INFO: Saving models and training states.
+2024-04-10 15:28:30,328 INFO: [ epoch: 220 ] [ iter: 55,000 ] [ performance: 13.706 it/s ] [ lr: 4.73e-04 ] [ eta: 8:58:23 ] l_g_mssim: 1.3700e-01 l_g_total: 1.3700e-01 
+2024-04-10 15:28:30,328 INFO: Saving models and training states.
+2024-04-10 15:34:42,268 INFO: [ epoch: 240 ] [ iter: 60,000 ] [ performance: 14.513 it/s ] [ lr: 4.67e-04 ] [ eta: 8:53:25 ] l_g_mssim: 8.0812e-02 l_g_total: 8.0812e-02 
+2024-04-10 15:34:42,268 INFO: Saving models and training states.
+2024-04-10 15:41:05,534 INFO: [ epoch: 261 ] [ iter: 65,000 ] [ performance: 12.689 it/s ] [ lr: 4.62e-04 ] [ eta: 8:49:33 ] l_g_mssim: 5.3109e-02 l_g_total: 5.3109e-02 
+2024-04-10 15:41:05,534 INFO: Saving models and training states.
+2024-04-10 15:47:19,248 INFO: [ epoch: 281 ] [ iter: 70,000 ] [ performance: 13.362 it/s ] [ lr: 4.56e-04 ] [ eta: 8:44:20 ] l_g_mssim: 5.2321e-02 l_g_total: 5.2321e-02 
+2024-04-10 15:47:19,248 INFO: Saving models and training states.
+2024-04-10 15:53:14,865 INFO: [ epoch: 301 ] [ iter: 75,000 ] [ performance: 13.564 it/s ] [ lr: 4.50e-04 ] [ eta: 8:37:16 ] l_g_mssim: 7.4419e-02 l_g_total: 7.4419e-02 
+2024-04-10 15:53:14,865 INFO: Saving models and training states.
+2024-04-10 15:59:15,153 INFO: [ epoch: 321 ] [ iter: 80,000 ] [ performance: 13.570 it/s ] [ lr: 4.43e-04 ] [ eta: 8:30:46 ] l_g_mssim: 5.3454e-02 l_g_total: 5.3454e-02 
+2024-04-10 15:59:15,153 INFO: Saving models and training states.
+2024-04-10 16:03:36,843 INFO: Interrupted, saving latest models.
