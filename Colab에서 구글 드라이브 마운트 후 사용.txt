@@ -4,3 +4,41 @@ drive.mount('/content/drive')
 
 # 실행
 !python upscale_x2.py
+
+
+from google.colab import drive
+drive.mount('/content/drive')
+
+%cd /content/FrameUp-Tool
+!python main.py \
+ --input "/content/drive/MyDrive/input.mp4" \
+ --output "/content/upscaled_x2.mp4" \
+ --model "/content/FrameUp-Tool/model/2xNomosUni_span_multijpg.pth"
+
+
+1️⃣ 구글 드라이브 마운트
+from google.colab import drive
+drive.mount('/content/drive')
+
+
+2️⃣ 프로젝트 폴더로 이동
+%cd /content/FrameUp-Tool
+
+3️⃣ SPAN 업스케일 실행
+✅ 방법 A: 간단 실행 (upscale_x2.py)
+
+기본 설정 / 입력경로만 수정하면 되는 버전
+
+!python upscale_x2.py
+
+✅ 방법 B: CLI 직접 입력 (main.py)
+
+파일 명 마음대로 변경해서 실행 가능
+
+!python main.py \
+ --input "/content/drive/MyDrive/input.mp4" \
+ --output "/content/drive/MyDrive/upscaled_x2.mp4" \
+ --model "/content/FrameUp-Tool/model/2xNomosUni_span_multijpg.pth"
+
+
+
