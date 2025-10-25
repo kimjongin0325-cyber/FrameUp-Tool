@@ -1,44 +1,84 @@
-# Colab에서 구글 드라이브 마운트 후 사용
+# 🎥 FrameUp-Tool — SPAN x2 Video Upscaler (Colab Ready)
+
+AI 기반 업스케일링 모델 **SPAN**을 사용해,
+영상 해상도를 **2배(2x)** 향상시키는 업스케일링 도구입니다 ✅  
+CUDA 자동 감지 & Google Colab 완전 지원!
+
+---
+
+## 🌟 Features
+
+✔ SPAN 모델 기반 **고품질 업스케일**  
+✔ **GPU 자동 사용**  
+✔ 프레임보간 결과물 업스케일에 최적화  
+✔ `.pth` 업스케일 모델 직접 로딩  
+✔ Colab 실행 100% 호환  
+✔ 단일 명령 실행 지원
+
+---
+
+## 🚀 Google Colab 사용 방법
+
+### 1️⃣ 구글 드라이브 마운트
+```python
 from google.colab import drive
 drive.mount('/content/drive')
 
-# 실행
-!python upscale_x2.py
-
-
-from google.colab import drive
-drive.mount('/content/drive')
-
-%cd /content/FrameUp-Tool
-!python main.py \
- --input "/content/drive/MyDrive/input.mp4" \
- --output "/content/upscaled_x2.mp4" \
- --model "/content/FrameUp-Tool/model/2xNomosUni_span_multijpg.pth"
-
-
-1️⃣ 구글 드라이브 마운트
-from google.colab import drive
-drive.mount('/content/drive')
-
-
-2️⃣ 프로젝트 폴더로 이동
+2️⃣ 프로젝트 폴더 이동
 %cd /content/FrameUp-Tool
 
 3️⃣ SPAN 업스케일 실행
-✅ 방법 A: 간단 실행 (upscale_x2.py)
-
-기본 설정 / 입력경로만 수정하면 되는 버전
-
+✅ 방법 A: 기본 자동 실행 (초보 추천)
 !python upscale_x2.py
 
-✅ 방법 B: CLI 직접 입력 (main.py)
 
-파일 명 마음대로 변경해서 실행 가능
+입력경로 변경 시 upscale_x2.py 내부 수정
 
+✅ 방법 B: 직접 경로 지정 (추천 방식)
 !python main.py \
  --input "/content/drive/MyDrive/input.mp4" \
  --output "/content/drive/MyDrive/upscaled_x2.mp4" \
  --model "/content/FrameUp-Tool/model/2xNomosUni_span_multijpg.pth"
+
+| 옵션         | 설명              |  필수 |
+| ---------- | --------------- | :-: |
+| `--input`  | 입력 영상 경로        |  ✅  |
+| `--output` | 업스케일 결과 저장 경로   |  ✅  |
+| `--model`  | SPAN .pth 모델 경로 |  ✅  |
+
+
+📂 모델 경로
+
+기본 제공 모델 ✅
+
+/content/FrameUp-Tool/model/2xNomosUni_span_multijpg.pth
+
+
+원하면 추가 SPAN 모델도 등록 가능 🔥
+
+✅ Credits
+
+SPAN Model — © Philip Hofmann (CC-BY-4.0 License)
+
+Colab / Integration — © kimjongin0325-cyber
+
+⭐ Development Roadmap
+기능	상태
+x2 SPAN Upscale	✅
+x4 업스케일 추가	🔜
+오디오 포함 지원	🔜
+프레임보간 + 업스케일 Full Pipeline	🔜
+GUI / Web UI 제공	검토중
+
+✉ Issue / PR 환영합니다
+🔥 즐거운 업스케일링 되세요!
+
+
+
+
+
+
+
 
 
 
