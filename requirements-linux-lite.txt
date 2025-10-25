@@ -1,23 +1,29 @@
---extra-index-url https://download.pytorch.org/whl/cpu
-opencv-python-headless
-timm
+# --extra-index-url https://download.pytorch.org/whl/cpu
+# opencv-python-headless
+# timm
+# numpy==1.26.4
+# kornia
+# scipy
+# psutil
+# GPUtil
+# spandrel
+# yt-dlp
+# requests
+# alive-progress
+# scenedetect[opencv]
+# pytorch-lightning
+# inquirer
+# rich-argparse
+# colored
+# pymediainfo
+# torch==2.5.0
+# torchvision==0.20.0
+# https://github.com/NevermindNilas/TAS-Modes-Host/releases/download/main/polygraphy-0.49.13-py2.py3-none-any.whl
+# https://github.com/NevermindNilas/TAS-Modes-Host/releases/download/main/upscale_ncnn_py-1.2.0-cp312-none-manylinux1_x86_64.whl
+# https://github.com/NevermindNilas/TAS-Modes-Host/releases/download/main/rife_ncnn_vulkan_python-1.3.0-cp312-cp312-linux_x86_64.whl
+torch==2.2.0
+torchvision==0.17.0
+opencv-python==4.9.0.80
 numpy==1.26.4
-kornia
-scipy
-psutil
-GPUtil
-spandrel
-yt-dlp
-requests
-alive-progress
-scenedetect[opencv]
-pytorch-lightning
-inquirer
-rich-argparse
-colored
-pymediainfo
-torch==2.5.0
-torchvision==0.20.0
-https://github.com/NevermindNilas/TAS-Modes-Host/releases/download/main/polygraphy-0.49.13-py2.py3-none-any.whl
-https://github.com/NevermindNilas/TAS-Modes-Host/releases/download/main/upscale_ncnn_py-1.2.0-cp312-none-manylinux1_x86_64.whl
-https://github.com/NevermindNilas/TAS-Modes-Host/releases/download/main/rife_ncnn_vulkan_python-1.3.0-cp312-cp312-linux_x86_64.whl
+tqdm==4.66.1
+ffmpeg-python==0.2.0
