@@ -1,9 +1,8 @@
 %cd /content/FrameUp-Tool
-
 !cat <<'EOF' > runner_span2x.py
 import argparse, os, time
 import cv2, torch, numpy as np
-from spandrel import ModelLoader  # SPAN/ESRGAN 계열 자동 로딩
+from spandrel import ModelLoader  # SPAN/ESRGAN loader
 
 def upscale_video(model_path, input_video, output_video):
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -58,7 +57,7 @@ if __name__ == "__main__":
     ap.add_argument("--input", required=True)
     ap.add_argument("--output", required=True)
     args = ap.parse_args()
-
     upscale_video(args.model, args.input, args.output)
 EOF
 
+!ls -al runner_span2x.py
