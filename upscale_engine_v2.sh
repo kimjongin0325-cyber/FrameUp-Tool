@@ -1,4 +1,4 @@
-!cat <<'EOF' > upscale_engine_v2.sh
+
 #!/usr/bin/env bash
 set -euo pipefail
 
