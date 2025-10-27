@@ -5,9 +5,8 @@ set -euo pipefail
 MODEL_FP16="model/2xNomosUni_span_multijpg_fp16_opset17.onnx"
 MODEL_FP32="model/2xNomosUni_span_multijpg_fp32_opset17.onnx"
 MODEL_SAFE="model/2xNomosUni_span_multijpg.safetensors"
-MODEL_PTH ="model/2xNomosUni_span_multijpg.pth"
+MODEL_PTH="model/2xNomosUni_span_multijpg.pth"
 
-# ONNX 대신 torch+spandrel 경로 고정: safetensors > pth > fp16 onnx > fp32 onnx
 choose_model(){
   [[ -f "$MODEL_SAFE" ]] && { echo "$MODEL_SAFE"; return; }
   [[ -f "$MODEL_PTH"  ]] && { echo "$MODEL_PTH";  return; }
@@ -53,5 +52,3 @@ main_loop
 EOF
 
 !chmod +x upscale_engine_v2.sh
-!./upscale_engine_v2.sh
-
