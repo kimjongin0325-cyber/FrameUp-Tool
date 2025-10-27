@@ -1,4 +1,4 @@
-%cd /content/FrameUp-Tool
+cd /content/FrameUp-Tool
 !cat <<'EOF' > runner_span2x.py
 import argparse, os, time
 import cv2, torch, numpy as np
