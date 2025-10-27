@@ -48,4 +48,3 @@ main_loop(){
   done
 }
 main_loop
-EOF
