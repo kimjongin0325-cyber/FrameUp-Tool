@@ -1,22 +1,40 @@
+import os
 import sys
 sys.path.append("/content/FrameUp-Tool")
 
-import argparse
 import torch
 import cv2
 import numpy as np
-from spandrel import ModelLoader
-import os
+import time
+import shutil
+from spandrel import ModelLoader  # SPAN 자동 감지/로드 지원
 
+
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
+
+# 🔹 임시파일 및 이전 결과 자동 정리
+def clean_temp():
+    print("🧹 Cleaning temporary files...")
+    temp_files = [
+        "/content/audio.m4a",
+        "/content/upscaled_x2.mp4",
+        "/content/final_output.mp4"
+    ]
+    for f in temp_files:
+        if os.path.exists(f):
+            os.remove(f)
+
+
+# 🔹 SPAN 업스케일 실행
 def upscale_video(model_path, input_video, output_video):
-    device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"🚀 Using device: {device}")
 
     print("🧠 Loading model:", model_path)
     model = ModelLoader().load_from_file(model_path).to(device)
     model.eval()
 
-    print("🎬 Loading video:", input_video)
+    print("🎬 Loading:", input_video)
     cap = cv2.VideoCapture(input_video)
     if not cap.isOpened():
         raise FileNotFoundError("❌ Video cannot be opened")
@@ -32,9 +50,13 @@ def upscale_video(model_path, input_video, output_video):
         (w * 2, h * 2)
     )
 
-    print("⚡ Upscaling starts...")
-    frame_idx = 0
+    frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    print(f"📈 {w}x{h} → {w*2}x{h*2}, frames: {frame_count}")
 
+    print("⚡ Upscaling...")
+    start = time.time()
+
+    frame_idx = 0
     while True:
         ret, frame = cap.read()
         if not ret:
@@ -50,25 +72,46 @@ def upscale_video(model_path, input_video, output_video):
         out.write(bgr)
 
         frame_idx += 1
-        print(f"{frame_idx} frames processed", end="\r")
+        print(f"{frame_idx}/{frame_count} frames", end="\r")
 
     cap.release()
     out.release()
 
-    print(f"\n✅ Upscale Complete → {output_video}")
+    t = time.time() - start
+    print(f"\n✅ Upscale Complete → {output_video} (⏱ {t:.1f}s)")
+
+
+# 🔹 Drive에 자동 백업
+def save_to_drive():
+    timestamp = time.strftime("%Y%m%d_%H%M%S")
+    dst = f"/content/drive/MyDrive/FrameUp/output_{timestamp}.mp4"
+    shutil.copy("/content/upscaled_x2.mp4", dst)
+    print(f"📁 Saved: {dst}")
+
 
 def main():
-    parser = argparse.ArgumentParser(description="SPAN x2 Upscaler CLI")
-    parser.add_argument("--input", required=True, help="Input video path")
-    parser.add_argument("--output", required=True, help="Output video path")
-    parser.add_argument("--model", required=True, help="Model (.pth) path")
-    args = parser.parse_args()
+    while True:
+        print("\n===============================")
+        input_video = input("🎬 업스케일할 영상 경로 입력: ")
 
-    upscale_video(
-        model_path=args.model,
-        input_video=args.input,
-        output_video=args.output
-    )
+        if not os.path.exists(input_video):
+            print("❌ 파일 없음 — 경로 다시 확인!")
+            continue
+
+        clean_temp()
+
+        model_path = "/content/FrameUp-Tool/models/4xmssim_span_pretrain.pth"
+        output_file = "/content/upscaled_x2.mp4"
+
+        upscale_video(model_path, input_video, output_file)
+
+        save_to_drive()
+
+        again = input("\n➕ 다음 영상도 업스케일? (y/n): ").strip().lower()
+        if again != "y":
+            print("\n👋 작업 종료!")
+            break
+
 
 if __name__ == "__main__":
     main()
