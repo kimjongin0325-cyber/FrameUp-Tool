@@ -8,7 +8,7 @@ from spandrel import ModelLoader
 
 model_path = "/content/FrameUp-Tool/model/2xNomosUni_span_multijpg.pth"
 input_path = "/content/drive/MyDrive/m.mp4"  # ✅ 구글 드라이브 경로
-output_path = "/content/drive/MyDrive/upscaled_x2.mp4"
+output_path = "/content/upscaled_x2.mp4"
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
