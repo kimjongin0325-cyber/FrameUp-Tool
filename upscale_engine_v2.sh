@@ -50,5 +50,3 @@ main_loop(){
 }
 main_loop
 EOF
-
-!chmod +x upscale_engine_v2.sh
