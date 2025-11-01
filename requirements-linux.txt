@@ -6,7 +6,7 @@ kornia
 scipy
 psutil
 GPUtil
-spandrel==0.5.0
+spandrel>=0.5.0
 yt-dlp
 requests
 alive-progress
