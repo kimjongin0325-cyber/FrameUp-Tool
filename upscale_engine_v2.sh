@@ -1,8 +1,20 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/bash
+# ============================================================
+#  upscale_engine_v2.sh (최적화 버전)
+#  - runner_span2x_fast_batch.py 사용
+#  - GPU 병목 해소, 속도 2~3배 향상
+# ============================================================
 
-MODEL_DIR="model"
+MODEL_DIR="/content/FrameUp-Tool/model"
+INPUT_VIDEO="$1"
+BASENAME=$(basename "$INPUT_VIDEO")
+NAME="${BASENAME%.*}"
+OUTPUT_VIDEO="/content/FrameUp-Tool/${NAME}_x2.mp4"
+AUDIO_FILE="/content/FrameUp-Tool/${NAME}_audio.aac"
 
+# -----------------------------
+# 모델 자동 탐색
+# -----------------------------
 models=(
   "$MODEL_DIR/2xNomosUni_span_multijpg.safetensors"
   "$MODEL_DIR/2xNomosUni_span_multijpg.pth"
@@ -10,42 +22,48 @@ models=(
   "$MODEL_DIR/2xNomosUni_span_multijpg_fp32_opset17.onnx"
 )
 
-choose_model() {
-  for m in "${models[@]}"; do
-    [[ -f "$m" ]] && echo "$m" && return
-  done
-  echo "none"
-}
+mdl=""
+for m in "${models[@]}"; do
+  if [ -f "$m" ]; then
+    mdl="$m"
+    break
+  fi
+done
 
-extract_audio() {
-  ffmpeg -y -i "$1" -vn -c:a copy "$2" || \
-  ffmpeg -y -i "$1" -vn -c:a aac -b:a 192k "$2"
-}
+if [ -z "$mdl" ]; then
+  echo "❌ 모델 파일을 찾을 수 없습니다. ($MODEL_DIR)"
+  exit 1
+fi
 
-basename_noext() {
-  local f="${1##*/}"
-  echo "${f%.*}"
-}
+echo "[model] Using model: $mdl"
 
-run() {
-  local in="$1"
-  local name; name=$(basename_noext "$in")
-  local aud="${name}.aac"
-  local out="${name}_x2.mp4"
+# -----------------------------
+# 오디오 추출
+# -----------------------------
+echo "[audio] Extracting audio..."
+ffmpeg -y -i "$INPUT_VIDEO" -vn -c:a copy "$AUDIO_FILE" || \
+ffmpeg -y -i "$INPUT_VIDEO" -vn -c:a aac -b:a 192k "$AUDIO_FILE"
 
-  mdl=$(choose_model)
-  [[ "$mdl" == "none" ]] && {
-    echo "❌ No model found in model/"
-    exit 1
-  }
+# -----------------------------
+# 업스케일 실행 (FAST-BATCH 버전)
+# -----------------------------
+echo "[upscale] Running upscale with runner_span2x_fast_batch.py ..."
+python /content/FrameUp-Tool/runner_span2x_fast_batch.py \
+  --model "$mdl" \
+  --input "$INPUT_VIDEO" \
+  --output "$OUTPUT_VIDEO" \
+  --batch 4
 
-  echo "[Audio-Mux] -> $aud"
-  extract_audio "$in" "$aud"
+if [ $? -ne 0 ]; then
+  echo "❌ Upscale 실패"
+  exit 1
+fi
 
-  echo "[Upscale 2X] -> $out"
-  python runner_span2x.py --model "$mdl" --input "$in" --output "$out"
+# -----------------------------
+# 오디오 합성
+# -----------------------------
+echo "[merge] Combining upscaled video and extracted audio..."
+ffmpeg -y -i "$OUTPUT_VIDEO" -i "$AUDIO_FILE" -c:v copy -c:a aac -b:a 192k \
+  "/content/FrameUp-Tool/${NAME}_x2_final.mp4"
 
-  echo "✅ Output: /content/FrameUp-Tool/$out"
-}
-
-run "$1"
+echo "✅ 완료: /content/FrameUp-Tool/${NAME}_x2_final.mp4"
