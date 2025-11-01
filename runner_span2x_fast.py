@@ -1,0 +1,152 @@
+
+#!/usr/bin/env python3
+import os
+import cv2
+import torch
+import argparse
+import numpy as np
+from spandrel import ModelLoader
+from tqdm import tqdm
+import GPUtil
+
+def aggressive_auto_tile(w, h, prefer_full_frame=True):
+    """
+    More aggressive tiling to utilize VRAM better.
+    - On >=12GB free VRAM, try full-frame (1x1) by default.
+    - Otherwise scale down gradually.
+    """
+    gpus = GPUtil.getGPUs()
+    if not gpus:
+        return 2  # CPU fallback: safer 2x2
+    free = gpus[0].memoryFree  # MB
+    size_factor = (w * h) / (1920 * 1080)
+
+    # Prefer fewer tiles when lots of VRAM is free.
+    if free > 12000 and size_factor < 8:
+        return 1 if prefer_full_frame else 2
+    elif free > 8000:
+        return 2
+    elif free > 4000:
+        return 3
+    else:
+        return 4
+
+def process_tile(model, tile_bgr, pad, use_fp16=False):
+    rgb = cv2.cvtColor(tile_bgr, cv2.COLOR_BGR2RGB)
+    t = torch.from_numpy(rgb).float().permute(2, 0, 1).unsqueeze(0) / 255.0
+    if use_fp16:
+        t = t.half()
+    t = t.to(model.device)
+
+    with torch.no_grad():
+        out = model(t)[0].clamp(0, 1)
+
+    out_rgb = (out.permute(1, 2, 0).cpu().numpy() * 255).astype(np.uint8)
+    cropped = out_rgb[pad*2:-pad*2 or None, pad*2:-pad*2 or None]
+    return cv2.cvtColor(cropped, cv2.COLOR_RGB2BGR)
+
+def upscale_video(model_path, input_video, output_video, force_tile=None, pad=16, use_fp16=False, codec='mp4v', tf32=True):
+    # Torch performance knobs
+    torch.backends.cudnn.benchmark = True
+    if tf32 and torch.cuda.is_available():
+        torch.backends.cuda.matmul.allow_tf32 = True
+        try:
+            torch.set_float32_matmul_precision('medium')
+        except Exception:
+            pass
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    print(f"[runner] device = {device}")
+    os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
+
+    # Load model
+    model = ModelLoader().load_from_file(model_path).to(device).eval()
+    if use_fp16 and device == "cuda":
+        try:
+            model = model.half()
+            print("[precision] FP16 enabled")
+        except Exception as e:
+            print(f"[precision] FP16 requested but not applied: {e}")
+
+    # Prefer FFMPEG backend when available
+    cap = cv2.VideoCapture(input_video, cv2.CAP_FFMPEG)
+    if not cap.isOpened():
+        # fallback
+        cap = cv2.VideoCapture(input_video)
+    if not cap.isOpened():
+        raise FileNotFoundError(f"Cannot open: {input_video}")
+
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+    tile = force_tile if force_tile is not None else aggressive_auto_tile(w, h, prefer_full_frame=True)
+    tw, th = w // tile, h // tile
+
+    print(f"[upscale] {w}x{h} -> {w*2}x{h*2}, {fps:.1f}fps")
+    print(f"[tiling]  auto={tile}x{tile}, pad={pad}px (force_tile={force_tile})")
+    print(f"[frames]  {total} frames")
+    print(f"[codec]   fourcc={codec}")
+
+    # Writer (try FFMPEG-friendly fourccs first)
+    fourcc = cv2.VideoWriter_fourcc(*codec)
+    out = cv2.VideoWriter(output_video, fourcc, fps, (w * 2, h * 2))
+    if not out.isOpened():
+        # fallback to mp4v
+        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+        out = cv2.VideoWriter(output_video, fourcc, fps, (w * 2, h * 2))
+    if not out.isOpened():
+        raise RuntimeError("Failed to open VideoWriter. Try a different --codec (e.g., avc1, mp4v, H264).")
+
+    pbar = tqdm(total=total)
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+        rows_up = []
+        for ty in range(tile):
+            row_tiles = []
+            for tx in range(tile):
+                sy, sx = ty * th, tx * tw
+                ey = h if ty == tile - 1 else sy + th
+                ex = w if tx == tile - 1 else sx + tw
+                tile_bgr = np.pad(frame[sy:ey, sx:ex], ((pad, pad), (pad, pad), (0, 0)), mode="edge")
+                row_tiles.append(process_tile(model, tile_bgr, pad, use_fp16=use_fp16))
+            rows_up.append(np.hstack(row_tiles))
+        up = np.vstack(rows_up)
+        out.write(up)
+        pbar.update(1)
+    pbar.close()
+
+    cap.release()
+    out.release()
+    print(f"✅ Done: {output_video}")
+
+def parse_args():
+    p = argparse.ArgumentParser()
+    p.add_argument("--model",  required=True, help="Path to spandrel model file")
+    p.add_argument("--input",  required=True, help="Input video path")
+    p.add_argument("--output", required=True, help="Output video path")
+    p.add_argument("--tile", type=int, default=None, help="Force tile count per axis (e.g., 1,2,3,4). Overrides auto tiler.")
+    p.add_argument("--pad", type=int, default=16, help="Pad size per side before inference (to reduce seam artifacts)")
+    p.add_argument("--fp16", action="store_true", help="Enable FP16 (half) inference when supported")
+    p.add_argument("--codec", type=str, default="mp4v", help="FourCC for VideoWriter (e.g., avc1, mp4v, H264)")
+    p.add_argument("--no-tf32", action="store_true", help="Disable TF32 matmul (Ampere+)")
+    return p.parse_args()
+
+def main():
+    args = parse_args()
+    upscale_video(
+        model_path=args.model,
+        input_video=args.input,
+        output_video=args.output,
+        force_tile=args.tile,
+        pad=args.pad,
+        use_fp16=args.fp16,
+        codec=args.codec,
+        tf32=not args.no_tf32
+    )
+
+if __name__ == "__main__":
+    main()
