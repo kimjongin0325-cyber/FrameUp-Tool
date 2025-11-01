@@ -86,6 +86,8 @@ def main():
     p.add_argument("--model",  required=True)
     p.add_argument("--input",  required=True)
     p.add_argument("--output", required=True)
+    # 🌟 추가된 부분: '--batch' 인자 추가 (기존 쉘 스크립트와의 호환성 확보)
+    p.add_argument("--batch", type=int, default=1, help="Frame batch size (currently used for compatibility only; processing is per frame/tile).")
     args = p.parse_args()
     upscale_video(args.model, args.input, args.output)
 
