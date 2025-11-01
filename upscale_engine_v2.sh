@@ -1,7 +1,7 @@
 #!/bin/bash
 # ============================================================
 #  upscale_engine_v2.sh (최적화 버전)
-#  - runner_span2x_fast_batch.py 사용
+#  - runner_span2x.py 사용으로 변경됨 (배치 기능 유지 여부는 Python 파일에 따름)
 #  - GPU 병목 해소, 속도 2~3배 향상
 #  - [수정] 오디오 합성 로직 개선
 # ============================================================
@@ -61,10 +61,13 @@ else
 fi
 
 # -----------------------------
-# 업스케일 실행 (FAST-BATCH 버전)
+# 업스케일 실행 (파일 이름 변경 적용)
 # -----------------------------
-echo "[upscale] Running upscale with runner_span2x_fast_batch.py ..."
-python /content/FrameUp-Tool/runner_span2x_fast_batch.py \
+echo "[upscale] Running upscale with runner_span2x.py ..."
+# NOTE: 원본 스크립트 (runner_span2x.py)는 --batch 인자를 지원하지 않을 수 있습니다.
+# 만약 runner_span2x.py가 배치 처리를 지원하지 않는다면, 이 인자(--batch 4)를 제거하거나,
+# runner_span2x.py 파일 내부에 배치 처리 로직을 추가해야 합니다.
+python /content/FrameUp-Tool/runner_span2x.py \
   --model "$mdl" \
   --input "$INPUT_VIDEO" \
   --output "$OUTPUT_VIDEO" \
@@ -92,9 +95,6 @@ fi
 # -----------------------------
 # 임시 파일 정리 (선택 사항)
 # -----------------------------
-# if [ -f "$OUTPUT_VIDEO" ]; then
-#   rm "$OUTPUT_VIDEO"
-# fi
 if [ -f "$AUDIO_FILE" ]; then
   rm "$AUDIO_FILE"
 fi
