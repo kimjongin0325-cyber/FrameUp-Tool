@@ -17,17 +17,16 @@ def load_model_auto(model_path, device):
     if ext in [".pth", ".pt", ".safetensors"]:
         print(f"[model] Loading Torch model → {model_path}")
         loader = ModelLoader()
+        # ✅ 최신 spandrel 대응
         model = loader.load_model(model_path).to(device).eval()
         return model
     elif ext == ".onnx":
-        providers = []
         if torch.cuda.is_available():
             providers = ["TensorrtExecutionProvider", "CUDAExecutionProvider", "CPUExecutionProvider"]
         else:
             providers = ["CPUExecutionProvider"]
         print(f"[model] Loading ONNX model via onnxruntime → {model_path}")
         session = ort.InferenceSession(model_path, providers=providers)
-        # CPU fallback 경고 추가
         if "CPUExecutionProvider" in session.get_providers():
             print("[warn] ⚠️ Running on CPU (CUDA/TensorRT not available)")
         return session
@@ -106,7 +105,6 @@ def upscale_video(model_path, input_video, output_video,
     total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
     tile = force_tile if force_tile is not None else aggressive_auto_tile(w, h, prefer_full_frame=True)
-    tw, th = w // tile, h // tile
 
     # 배치 자동 설정
     if batch_size is None:
@@ -123,19 +121,16 @@ def upscale_video(model_path, input_video, output_video,
     print(f"[tiling]  auto={tile}x{tile}, pad={pad}px (force_tile={force_tile})")
     print(f"[frames]  {total} frames")
 
-    # 비디오 라이터
     fourcc = cv2.VideoWriter_fourcc(*codec)
     out = cv2.VideoWriter(output_video, fourcc, fps, (w * 2, h * 2))
     if not out.isOpened():
         raise RuntimeError("❌ Failed to open VideoWriter.")
 
-    # 추론 이름 사전 캐싱
     is_onnx = isinstance(model, ort.InferenceSession)
     if is_onnx:
         input_name = model.get_inputs()[0].name
         output_name = model.get_outputs()[0].name
 
-    # 메인 루프
     pbar = tqdm(total=total)
     batch_frames = []
     while True:
@@ -150,10 +145,9 @@ def upscale_video(model_path, input_video, output_video,
                                     output_name if is_onnx else None)
             for img in results:
                 out.write(img)
-            pbar.update(min(batch_size, total - pbar.n))  # 안정형 갱신
+            pbar.update(min(batch_size, total - pbar.n))
             batch_frames = []
 
-    # 남은 프레임 처리
     if len(batch_frames) > 0:
         results = process_batch(model, batch_frames, pad, use_fp16, is_onnx,
                                 input_name if is_onnx else None,
@@ -168,7 +162,7 @@ def upscale_video(model_path, input_video, output_video,
     print(f"✅ Done: {output_video}")
 
 # ==============================================================
-# 배치 추론 처리 함수
+# 배치 추론 처리
 # ==============================================================
 def process_batch(model, frames, pad, use_fp16, is_onnx, input_name, output_name):
     imgs = []
@@ -183,7 +177,6 @@ def process_batch(model, frames, pad, use_fp16, is_onnx, input_name, output_name
         result = model.run([output_name], {input_name: batch_np})[0]
         for out in result:
             out_rgb = np.clip(out.transpose(1, 2, 0) * 255, 0, 255).astype(np.uint8)
-            # 안전한 crop 처리 (pad*2 → pad)
             cropped = out_rgb[pad:-pad or None, pad:-pad or None]
             imgs.append(cv2.cvtColor(cropped, cv2.COLOR_RGB2BGR))
     else:
