@@ -17,7 +17,7 @@ def load_model_auto(model_path, device):
     if ext in [".pth", ".pt", ".safetensors"]:
         print(f"[model] Loading Torch model → {model_path}")
         loader = ModelLoader()
-        model = loader.load(model_path).to(device).eval()
+        model = loader.load_model(model_path).to(device).eval()
         return model
     elif ext == ".onnx":
         providers = []
@@ -27,6 +27,9 @@ def load_model_auto(model_path, device):
             providers = ["CPUExecutionProvider"]
         print(f"[model] Loading ONNX model via onnxruntime → {model_path}")
         session = ort.InferenceSession(model_path, providers=providers)
+        # CPU fallback 경고 추가
+        if "CPUExecutionProvider" in session.get_providers():
+            print("[warn] ⚠️ Running on CPU (CUDA/TensorRT not available)")
         return session
     else:
         raise ValueError(f"❌ Unsupported model format: {ext}")
@@ -147,7 +150,7 @@ def upscale_video(model_path, input_video, output_video,
                                     output_name if is_onnx else None)
             for img in results:
                 out.write(img)
-            pbar.update(batch_size)
+            pbar.update(min(batch_size, total - pbar.n))  # 안정형 갱신
             batch_frames = []
 
     # 남은 프레임 처리
@@ -157,7 +160,7 @@ def upscale_video(model_path, input_video, output_video,
                                 output_name if is_onnx else None)
         for img in results:
             out.write(img)
-        pbar.update(len(batch_frames))
+        pbar.update(min(len(batch_frames), total - pbar.n))
 
     pbar.close()
     cap.release()
@@ -180,7 +183,8 @@ def process_batch(model, frames, pad, use_fp16, is_onnx, input_name, output_name
         result = model.run([output_name], {input_name: batch_np})[0]
         for out in result:
             out_rgb = np.clip(out.transpose(1, 2, 0) * 255, 0, 255).astype(np.uint8)
-            cropped = out_rgb[pad*2:-pad*2 or None, pad*2:-pad*2 or None]
+            # 안전한 crop 처리 (pad*2 → pad)
+            cropped = out_rgb[pad:-pad or None, pad:-pad or None]
             imgs.append(cv2.cvtColor(cropped, cv2.COLOR_RGB2BGR))
     else:
         for f in frames:
