@@ -1,9 +1,9 @@
 #!/bin/bash
 # ============================================================
-#  upscale_engine_v2.sh (최적화 버전)
-#  - runner_span2x.py 사용으로 변경됨 (배치 기능 유지 여부는 Python 파일에 따름)
+#  upscale_engine_v2.sh (TensorRT 대응 완성본)
+#  - runner_span2x.py: TensorRT .engine 지원 버전과 연동
 #  - GPU 병목 해소, 속도 2~3배 향상
-#  - [수정] 오디오 합성 로직 개선
+#  - [개선] TensorRT 엔진 파일 자동 감지 및 우선 사용
 # ============================================================
 
 MODEL_DIR="/content/FrameUp-Tool/model"
@@ -14,17 +14,18 @@ NAME="${BASENAME%.*}"
 # 임시 파일 경로
 OUTPUT_VIDEO="/content/FrameUp-Tool/${NAME}_x2.mp4"
 AUDIO_FILE="/content/FrameUp-Tool/${NAME}_audio.aac"
-# 최종 출력 파일 경로
 FINAL_OUTPUT="/content/FrameUp-Tool/${NAME}_x2_final.mp4"
 
-# -----------------------------
-# 모델 자동 탐색
-# -----------------------------
+# ============================================================
+# 🔍 모델 자동 탐색 (우선순위: TensorRT > FP16 ONNX > FP32 ONNX > 기타)
+# ============================================================
 models=(
-  "$MODEL_DIR/2xNomosUni_span_multijpg.safetensors"
-  "$MODEL_DIR/2xNomosUni_span_multijpg.pth"
+  "$MODEL_DIR/2xNomosUni_span_multijpg_fp16.engine"
+  "$MODEL_DIR/2xNomosUni_span_multijpg.engine"
   "$MODEL_DIR/2xNomosUni_span_multijpg_fp16_opset17.onnx"
   "$MODEL_DIR/2xNomosUni_span_multijpg_fp32_opset17.onnx"
+  "$MODEL_DIR/2xNomosUni_span_multijpg.safetensors"
+  "$MODEL_DIR/2xNomosUni_span_multijpg.pth"
 )
 
 mdl=""
@@ -42,31 +43,25 @@ fi
 
 echo "[model] Using model: $mdl"
 
-# -----------------------------
-# 오디오 추출
-# -----------------------------
+# ============================================================
+# 🎵 오디오 추출
+# ============================================================
 echo "[audio] Extracting audio..."
-# 오디오 추출 시도 (첫 번째 명령어 실패 시 두 번째 명령어 실행)
 ffmpeg -y -i "$INPUT_VIDEO" -vn -c:a copy "$AUDIO_FILE" > /dev/null 2>&1 || \
 ffmpeg -y -i "$INPUT_VIDEO" -vn -c:a aac -b:a 192k "$AUDIO_FILE" > /dev/null 2>&1
 
-# 오디오 파일이 성공적으로 추출되었는지 확인 (파일 크기가 0보다 큰지)
 AUDIO_SUCCESS=0
 if [ -s "$AUDIO_FILE" ]; then
   AUDIO_SUCCESS=1
   echo "[audio] Audio extracted successfully."
 else
-  # 오디오 추출에 실패했거나 오디오가 없는 경우
   echo "[audio] No audio found or extraction failed. Proceeding without audio merge."
 fi
 
-# -----------------------------
-# 업스케일 실행 (파일 이름 변경 적용)
-# -----------------------------
+# ============================================================
+# 🚀 업스케일 실행 (TensorRT 자동 인식)
+# ============================================================
 echo "[upscale] Running upscale with runner_span2x.py ..."
-# NOTE: 원본 스크립트 (runner_span2x.py)는 --batch 인자를 지원하지 않을 수 있습니다.
-# 만약 runner_span2x.py가 배치 처리를 지원하지 않는다면, 이 인자(--batch 4)를 제거하거나,
-# runner_span2x.py 파일 내부에 배치 처리 로직을 추가해야 합니다.
 python /content/FrameUp-Tool/runner_span2x.py \
   --model "$mdl" \
   --input "$INPUT_VIDEO" \
@@ -78,23 +73,21 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-# -----------------------------
-# 오디오 합성
-# -----------------------------
+# ============================================================
+# 🔊 오디오 합성
+# ============================================================
 if [ $AUDIO_SUCCESS -eq 1 ]; then
   echo "[merge] Combining upscaled video and extracted audio..."
-  # 오디오가 있는 경우: 비디오와 오디오를 합성
   ffmpeg -y -i "$OUTPUT_VIDEO" -i "$AUDIO_FILE" -c:v copy -c:a aac -b:a 192k \
     -map 0:v:0 -map 1:a:0 -shortest "$FINAL_OUTPUT"
 else
   echo "[merge] No audio to combine. Renaming video file."
-  # 오디오가 없는 경우: 업스케일된 비디오 파일의 이름을 최종 이름으로 변경
   mv "$OUTPUT_VIDEO" "$FINAL_OUTPUT"
 fi
 
-# -----------------------------
-# 임시 파일 정리 (선택 사항)
-# -----------------------------
+# ============================================================
+# 🧹 임시 파일 정리
+# ============================================================
 if [ -f "$AUDIO_FILE" ]; then
   rm "$AUDIO_FILE"
 fi
